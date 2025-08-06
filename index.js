@@ -12,7 +12,21 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+// Configure CORS to allow requests from localhost during development
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:5173", // Vite default
+      "http://localhost:8080", // Common dev server
+      "https://url-shortner-sigma-nine.vercel.app", // Allow same origin
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(bodyParser.json());
 
 // API routes - these must come before static files
