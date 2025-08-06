@@ -20,7 +20,7 @@ app.use(
       "http://localhost:3001",
       "http://localhost:5173", // Vite default
       "http://localhost:8080", // Common dev server
-      "https://url-shortner-sigma-nine.vercel.app", // Allow same origin
+      "https://url-shortner-sigma-nine.vercel.app", // demo vercel url
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -41,7 +41,6 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 3000;
 const MONGO_URI =
   process.env.MOGODB_URL || "mongodb://localhost:27017/urlshortener";
-console.log(MONGO_URI);
 
 mongoose
   .connect(MONGO_URI)
