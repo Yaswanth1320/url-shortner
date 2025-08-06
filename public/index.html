@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .short-url {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e1e5e9;
+            margin-bottom: 15px;
+            word-break: break-all;
+        }
+
+        .short-url a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .short-url a:hover {
+            text-decoration: underline;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #e1e5e9;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #c33;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            flex: 1;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            flex: 1;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔗 URL Shortener</h1>
+            <p>Shorten your long URLs with ease</p>
+        </div>
+        
+        <div class="main-content">
+            <form id="urlForm">
+                <div class="form-group">
+                    <label for="longUrl">Enter your long URL:</label>
+                    <input 
+                        type="url" 
+                        id="longUrl" 
+                        placeholder="https://www.example.com/very/long/url/that/needs/shortening"
+                        required
+                    >
+                </div>
+                <button type="submit" class="btn" id="submitBtn">
+                    Shorten URL
+                </button>
+            </form>
+
+            <div class="error" id="error">
+                <strong>Error:</strong> <span id="errorMessage"></span>
+            </div>
+
+            <div class="loading" id="loading" style="display: none;">
+                Creating short URL...
+            </div>
+
+            <div class="result" id="result">
+                <h3>✅ Your Short URL</h3>
+                <div class="short-url" id="shortUrlDisplay"></div>
+                
+                <div class="stats" id="stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="accessCount">0</div>
+                        <div class="stat-label">Clicks</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="createdAt">-</div>
+                        <div class="stat-label">Created</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="expiresAt">-</div>
+                        <div class="stat-label">Expires</div>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-secondary" id="copyBtn">Copy URL</button>
+                    <button class="btn btn-secondary" id="statsBtn">Refresh Stats</button>
+                    <button class="btn btn-danger" id="deleteBtn">Delete URL</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "http://localhost:3000";
+        let currentShortCode = null;
+
+        // DOM elements
+        const form = document.getElementById('urlForm');
+        const longUrlInput = document.getElementById('longUrl');
+        const submitBtn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        const error = document.getElementById('error');
+        const errorMessage = document.getElementById('errorMessage');
+        const shortUrlDisplay = document.getElementById('shortUrlDisplay');
+        const accessCount = document.getElementById('accessCount');
+        const createdAt = document.getElementById('createdAt');
+        const expiresAt = document.getElementById('expiresAt');
+        const copyBtn = document.getElementById('copyBtn');
+        const statsBtn = document.getElementById('statsBtn');
+        const deleteBtn = document.getElementById('deleteBtn');
+
+        // Show/hide error
+        function showError(message) {
+            errorMessage.textContent = message;
+            error.classList.add('show');
+            setTimeout(() => error.classList.remove('show'), 5000);
+        }
+
+        function hideError() {
+            error.classList.remove('show');
+        }
+
+        // Show/hide loading
+        function showLoading() {
+            loading.style.display = 'block';
+            submitBtn.disabled = true;
+            hideError();
+        }
+
+        function hideLoading() {
+            loading.style.display = 'none';
+            submitBtn.disabled = false;
+        }
+
+        // Create short URL
+        async function createShortUrl(url) {
+            try {
+                const response = await fetch(`${API_BASE}/shorten`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to create short URL');
+                }
+
+                return await response.json();
+            } catch (err) {
+                throw err;
+            }
+        }
+
+        // Get URL stats
+        async function getUrlStats(shortCode) {
+            try {
+                const response = await fetch(`${API_BASE}/shorten/${shortCode}/stats`);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to get stats');
+                }
+
+                return await response.json();
+            } catch (err) {
+                throw err;
+            }
+        }
+
+        // Delete URL
+        async function deleteUrl(shortCode) {
+            try {
+                const response = await fetch(`${API_BASE}/shorten/${shortCode}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to delete URL');
+                }
+
+                return true;
+            } catch (err) {
+                throw err;
+            }
+        }
+
+        // Display result
+        function displayResult(urlData) {
+            currentShortCode = urlData.shortCode;
+            const shortUrl = `${API_BASE}/${urlData.shortCode}`;
+            
+            shortUrlDisplay.innerHTML = `
+                <a href="${shortUrl}" target="_blank" onclick="updateStatsOnClick()">${shortUrl}</a>
+            `;
+            
+            accessCount.textContent = urlData.accessCount;
+            createdAt.textContent = new Date(urlData.createdAt).toLocaleDateString();
+            expiresAt.textContent = new Date(urlData.expiresAt).toLocaleDateString();
+            
+            result.classList.add('show');
+            startAutoRefresh(); // Start auto-refresh
+        }
+
+        // Update stats when URL is clicked
+        function updateStatsOnClick() {
+            setTimeout(() => {
+                refreshStats();
+            }, 1000); // Wait 1 second for the backend to process
+        }
+
+        // Refresh stats function
+        async function refreshStats() {
+            if (!currentShortCode) return;
+            
+            try {
+                const urlData = await getUrlStats(currentShortCode);
+                accessCount.textContent = urlData.accessCount;
+                createdAt.textContent = new Date(urlData.createdAt).toLocaleDateString();
+                expiresAt.textContent = new Date(urlData.expiresAt).toLocaleDateString();
+            } catch (err) {
+                console.error('Failed to refresh stats:', err);
+            }
+        }
+
+        // Auto-refresh stats every 5 seconds when result is shown
+        let statsInterval = null;
+        function startAutoRefresh() {
+            if (statsInterval) clearInterval(statsInterval);
+            statsInterval = setInterval(refreshStats, 5000);
+        }
+
+        function stopAutoRefresh() {
+            if (statsInterval) {
+                clearInterval(statsInterval);
+                statsInterval = null;
+            }
+        }
+
+        // Form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const url = longUrlInput.value.trim();
+            if (!url) return;
+
+            showLoading();
+
+            try {
+                const urlData = await createShortUrl(url);
+                displayResult(urlData);
+                hideLoading();
+            } catch (err) {
+                showError(err.message);
+                hideLoading();
+            }
+        });
+
+        // Copy URL
+        copyBtn.addEventListener('click', async () => {
+            if (!currentShortCode) return;
+            
+            const shortUrl = `${API_BASE}/${currentShortCode}`;
+            
+            try {
+                await navigator.clipboard.writeText(shortUrl);
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy URL';
+                }, 2000);
+            } catch (err) {
+                showError('Failed to copy URL');
+            }
+        });
+
+        // Refresh stats
+        statsBtn.addEventListener('click', async () => {
+            if (!currentShortCode) return;
+            
+            try {
+                await refreshStats();
+                statsBtn.textContent = 'Updated!';
+                setTimeout(() => {
+                    statsBtn.textContent = 'Refresh Stats';
+                }, 2000);
+            } catch (err) {
+                showError(err.message);
+            }
+        });
+
+        // Delete URL
+        deleteBtn.addEventListener('click', async () => {
+            if (!currentShortCode) return;
+            
+            if (!confirm('Are you sure you want to delete this URL?')) return;
+            
+            try {
+                await deleteUrl(currentShortCode);
+                result.classList.remove('show');
+                form.reset();
+                currentShortCode = null;
+                stopAutoRefresh(); // Stop auto-refresh
+                
+                deleteBtn.textContent = 'Deleted!';
+                setTimeout(() => {
+                    deleteBtn.textContent = 'Delete URL';
+                }, 2000);
+            } catch (err) {
+                showError(err.message);
+            }
+        });
+
+        // Handle URL parameters for direct access
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const shortCode = urlParams.get('code');
+            
+            if (shortCode) {
+                // This would be handled by the backend redirect
+                // For now, just show the short code
+                longUrlInput.value = `Short code: ${shortCode}`;
+            }
+        });
+    </script>
+</body>
+</html> 
